@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Записи в блоге</h1>
+<form action="" method="post">
+    {{ form.hidden_tag() }}
+<div class="col-md6 border rounded">
+    <h2>{{news.title}}</h2>
+    <div>
+        {{news.content}}
+    </div>
+
+    <div>
+        Автор - {{news.user.name}}, Дата написания - {{news.created_date}}
+    </div>
+    <div>
+        <br>
+        Комментарии
+        <p></p>
+        {% for all in comments %}
+        </br>
+        {% for text in all[:-1] %}
+            {{text}}
+        {% endfor %}
+        <br>
+        {{all[-1]}}
+        <br>
+        {% endfor %}
+    </div>
+
+    <p>
+        {{ form.title(class="form-control") }}<br>
+        {% for error in form.title.errors %}
+            <p content="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
+
+
+</div><p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    {{message}}
+    </form>
+{% endblock %}
