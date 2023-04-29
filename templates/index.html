@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Записи в блоге</h1>
+<h1>Посты форума</h1>
     {% if current_user.is_authenticated %}
     <a href="news" class="btn btn-secondary">Добавить новость</a>
 {% endif %}
@@ -26,7 +26,7 @@
         Автор - {{item.user.name}}, Дата написания - {{item.created_date}}
     </div>
     <a href="/news_comment/{{ item.id }}" class="btn btn-secondary">
-            Комеентировать
+            Комментировать
         </a>
 </div>
 {% endfor %}
