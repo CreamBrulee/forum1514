@@ -15,6 +15,10 @@ class Comments(SqlAlchemyBase):
                                 sqlalchemy.ForeignKey("users.id"))
     news_id = sqlalchemy.Column(sqlalchemy.Integer,
                                 sqlalchemy.ForeignKey("news.id"))
-    created_date = sqlalchemy.Column(sqlalchemy.String,
-                                     default=datetime.datetime.now().strftime('%d.%m.%y %H:%M'))
+    comment_id = sqlalchemy.Column(sqlalchemy.Integer,
+                                sqlalchemy.ForeignKey("comments.id"))
+    vlog = sqlalchemy.Column(sqlalchemy.Integer,
+                                   default=0)
+    created_date = sqlalchemy.Column(sqlalchemy.DateTime,
+                                     default=datetime.datetime.now())
     user = orm.relationship('User')

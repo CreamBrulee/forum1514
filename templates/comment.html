@@ -16,15 +16,18 @@
     <div>
         <br>
         Комментарии
-        <p></p>
         {% for all in comments %}
-        </br>
-        {% for text in all[:-1] %}
-            {{text}}
-        {% endfor %}
-        <br>
-        {{all[-1]}}
-        <br>
+            </br>
+            <p style="margin-left:{{all[4]}}em" >
+            {{all[0].strftime('%d.%m.%y %H:%M')}}
+            {{all[1]}}
+            <a href="/news_comment/{{ news.id }}/{{all[3]}}" class="btn btn-secondary">
+            Ответить
+            </a>
+            <br>
+            {{all[2]}}
+
+            <br>
         {% endfor %}
     </div>
 
