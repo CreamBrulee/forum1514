@@ -93,19 +93,6 @@ def news_comment(id):
                                 title='Комментирование новости', news=news,  form=form, comments=comments_ben)
 
 
-@app.route('/news_send_comment/<int:id>', methods=['GET', 'POST'])
-@login_required
-def news_send_comment(id):
-    form = NewsForm()
-    db_sess = db_session.create_session()
-    news = db_sess.query(News).filter(News.id == id).first()
-    #a = request.form['test']
-    #print(form.title.data)
-    #news.cooments += form.title.data
-    #return render_template('comment.html',
-    #                       title='Комментирование новости', news=news,  form=form)
-
-
 @app.route('/news/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_news(id):
@@ -174,11 +161,6 @@ def add_news():
                            form=form)
 
 
-@app.route('/odd_even')
-def odd_even():
-    return render_template('odd_even.html', number=2)
-
-
 @app.route('/register', methods=['GET', 'POST'])
 def reqister():
     form = RegisterForm()
@@ -205,30 +187,6 @@ def reqister():
     return render_template('register.html', title='Регистрация', form=form)
 
 
-@app.route("/cookie_test")
-def cookie_test():
-    visits_count = int(request.cookies.get("visits_count", 0))
-    if visits_count:
-        res = make_response(
-            f"Вы пришли на эту страницу {visits_count + 1} раз")
-        res.set_cookie("visits_count", str(visits_count + 1),
-                       max_age=60 * 60 * 24 * 365 * 2)
-    else:
-        res = make_response(
-            "Вы пришли на эту страницу в первый раз за последние 2 года")
-        res.set_cookie("visits_count", '1',
-                       max_age=60 * 60 * 24 * 365 * 2)
-    return res
-
-
-@app.route("/session_test")
-def session_test():
-    visits_count = session.get('visits_count', 0)
-    session['visits_count'] = visits_count + 1
-    return make_response(
-        f"Вы пришли на эту страницу {visits_count + 1} раз")
-
-
 @app.route('/logout')
 @login_required
 def logout():
@@ -236,6 +194,17 @@ def logout():
     return redirect("/")
 
 
+@app.route('/<int:userid>')
+def profil(userid):
+    return render_template('user.html', title=User.name)
+
+
 if __name__ == '__main__':
     db_session.global_init("db/blogs.db")
     main()
+
+
+
+
+
+
