@@ -11,6 +11,7 @@ from forms.newsform import NewsForm
 from forms.user import RegisterForm
 from forms.login import LoginForm
 
+dict_of_used_comms = {}
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(
@@ -25,7 +26,7 @@ def main():
 
     # app.run()
 
-    app.run(port=8888)
+    app.run(port=7777)
 
 
 @login_manager.user_loader
@@ -75,17 +76,88 @@ def news_comment(id):
         comment.text = text
         comment.user_id = user_id
         comment.news_id = news_id
-        comment.created_date = datetime.datetime.now().strftime('%d.%m.%y %H:%M')
+        comment.created_date = datetime.datetime.now()
         db_sess.add(comment)
         db_sess.commit()
-    comments = db_sess.query(Comments)
+    comments = db_sess.query(Comments).order_by('id')
+    tree = make_tree(comments)
+    #for i in make_tree(comments):
+    #    print(i.text)
+
+
     comments_ben = []
-    if comments:
-        for i in comments:
+    if tree:
+        for i in tree:
+            #print(i.created_date)
             user = db_sess.query(User)
             for j in user:
                 if j.id == i.user_id:
-                    comments_ben.append((i.created_date, j.name, i.text))
+                    comments_ben.append((i.created_date, j.name, i.text, i.id, i.vlog))
+    if form.validate_on_submit():
+        return redirect(f'/news_comment/{id}')
+    else:
+        return render_template('comment.html',
+                                title='Комментирование новости', news=news,  form=form, comments=comments_ben)
+
+
+def make_tree(items):
+    tree = []
+    for item in items:
+        item.children = []
+        item.level = 1
+        if item.comment_id is None:
+            tree.append(item)
+        else:
+            try:
+                parent = [p for p in items if p.id == item.comment_id][0]
+                parent.children.append(item)
+                item.level = parent.level + 1
+            except ValueError:
+                tree.append(item)
+    return make_all_tree(tree, [])
+
+
+def make_all_tree(list, ben):
+    for i in list:
+        ben.append(i)
+        if i.children:
+            make_all_tree(i.children, ben)
+    return ben
+
+
+
+@app.route('/news_comment/<int:id>/<int:com_id>', methods=['GET', 'POST'])
+@login_required
+def news_comment_replay(id, com_id):
+    form = NewsForm()
+    db_sess = db_session.create_session()
+    news = db_sess.query(News).filter(News.id == id).first()
+    com = db_sess.query(Comments).filter(Comments.id == com_id).first()
+    print(form.title.data)
+    if form.title.data is not None:
+        text = form.title.data
+        news_id = id
+        user_id = current_user.id
+        comment = Comments()
+        comment.text = text
+        comment.user_id = user_id
+        comment.news_id = news_id
+        comment.vlog = com.vlog + 3
+        comment.comment_id = com_id
+        comment.created_date = datetime.datetime.now()
+        db_sess.add(comment)
+        db_sess.commit()
+    comments = db_sess.query(Comments).order_by('id')
+    tree = make_tree(comments)
+
+    comments_ben = []
+    if tree:
+        for i in tree:
+            #print(i.created_date)
+            user = db_sess.query(User)
+            for j in user:
+                if j.id == i.user_id:
+                    comments_ben.append((i.created_date, j.name, i.text, i.id, i.vlog))
     if form.validate_on_submit():
         return redirect(f'/news_comment/{id}')
     else:
