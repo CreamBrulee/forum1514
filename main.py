@@ -43,7 +43,7 @@ def index():
             (News.user == current_user) | (News.is_private != True))
     else:
         news = db_sess.query(News).filter(News.is_private != True)
-    return render_template("index.html", news=news)
+    return render_template("index.html", news=news, title='FORUM1514')
 
 
 @app.route('/news_delete/<int:id>', methods=['GET', 'POST'])
@@ -81,10 +81,8 @@ def news_comment(id):
         db_sess.commit()
     comments = db_sess.query(Comments).order_by('id')
     tree = make_tree(comments)
-    #for i in make_tree(comments):
+    # for i in make_tree(comments):
     #    print(i.text)
-
-
     comments_ben = []
     if tree:
         for i in tree:
@@ -123,7 +121,6 @@ def make_all_tree(list, ben):
         if i.children:
             make_all_tree(i.children, ben)
     return ben
-
 
 
 @app.route('/news_comment/<int:id>/<int:com_id>', methods=['GET', 'POST'])
@@ -268,7 +265,7 @@ def logout():
 
 @app.route('/<int:userid>')
 def profil(userid):
-    return render_template('user.html', title=User.name)
+    return render_template('user.html', title='1')
 
 
 if __name__ == '__main__':

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Посты форума</h1>
+<div class="container bg-white rounded shadow-sm mt-4 py-2">
 <form action="" method="post">
     {{ form.hidden_tag() }}
-<div class="col-md6 border rounded">
-    <h2>{{news.title}}</h2>
+<div class="col-md6 border rounded p-1 mt-2">
+    <h2 class="rounded p-1" style="background-color: #d6e6fe">{{news.title}}</h2>
     <div>
         {{news.content}}
     </div>
@@ -13,26 +13,24 @@
     <div>
         Автор - {{news.user.name}}, Дата написания - {{news.created_date}}
     </div>
+    </div>
     <div>
-        <br>
-        Комментарии
+        <h5 class="mt-2">Комментарии</h5>
+        <div class="col-md6 border rounded p-1 mt-2">
         {% for all in comments %}
-            </br>
-            <p style="margin-left:{{all[4]}}em" >
-            {{all[0].strftime('%d.%m.%y %H:%M')}}
+            <p style="padding-left:{{all[4]}}em" >
+            {{all[0].strftime('%d.%m.%Y %H:%M')}}
             {{all[1]}}
-            <a href="/news_comment/{{ news.id }}/{{all[3]}}" class="btn btn-secondary">
+            <a href="/news_comment/{{ news.id }}/{{all[3]}}" class="btn btn-secondary btn-sm">
             Ответить
             </a>
-            <br>
             {{all[2]}}
-
-            <br>
         {% endfor %}
+        </div>
     </div>
 
     <p>
-        {{ form.title(class="form-control") }}<br>
+        {{ form.title(class="form-control") }}
         {% for error in form.title.errors %}
             <p content="alert alert-danger" role="alert">
                 {{ error }}
@@ -41,7 +39,8 @@
     </p>
 
 
-</div><p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
     {{message}}
     </form>
+</div>
 {% endblock %}

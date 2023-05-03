@@ -12,9 +12,9 @@
             crossorigin="anonymous"></script>
     <title>{{title}}</title>
 </head>
-<body>
-    <header class="p-3 bg-dark text-white">
-    <div class="container">
+<body class="bg-light">
+    <header class="p-3 bg-dark text-white ">
+    <div class="container ">
       <div class="d-flex flex-wrap justify-content-between">
         <h2  class="d-flex  mb-2 mb-lg-0 text-white text-decoration-none">
         <a href="/" class="text-white text-decoration-none">FORUM1514</a>
@@ -35,8 +35,9 @@
             </svg>
           </a>
           <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1"  >
+            <li><div class="d-flex justify-content-center"><h5>{{ current_user.name }}</h5></div></li>
             <li><a class="dropdown-item active" href="news">Новый пост</a></li>
-            <li><a class="dropdown-item" href="#">Профиль</a></li>
+            <li><a class="dropdown-item" href="/{{ current_user.id }}">Профиль</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="/logout">Выйти</a></li>
           </ul>
@@ -53,7 +54,7 @@
         </div>
     </header>
     <!-- Begin page content -->
-    <main role="main" class="container">
+    <main class="container">
         {% block content %}{% endblock %}
     </main>
 </body>
