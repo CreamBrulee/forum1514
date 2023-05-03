@@ -16,15 +16,20 @@
     </div>
     <div>
         <h5 class="mt-2">Комментарии</h5>
-        <div class="col-md6 border rounded p-1 mt-2">
+        <div class="d-flex flex-column col-md6 border rounded p-1 mt-2">
+
         {% for all in comments %}
-            <p style="padding-left:{{all[4]}}em" >
-            {{all[0].strftime('%d.%m.%Y %H:%M')}}
-            {{all[1]}}
-            <a href="/news_comment/{{ news.id }}/{{all[3]}}" class="btn btn-secondary btn-sm">
-            Ответить
-            </a>
-            {{all[2]}}
+            <div class="d-sm-flex flex-column" style="margin-left:{{all[4]}}em; margin-bottom: 10px;" >
+                <div class="d-flex flex-row">
+                    <b style="margin-right:15px">{{all[1]}}</b>
+                    <div class=" text-secondary">{{all[0].strftime('%d.%m.%Y %H:%M')}}</div>
+                </div>
+                {{all[2]}}
+                <div class="d-flex justify-content-start">
+                <a href="/news_comment/{{ news.id }}/{{all[3]}}" class="btn btn-outline-secondary btn-sm " style="width:100">
+                Ответить
+                </a></div>
+            </div>
         {% endfor %}
         </div>
     </div>

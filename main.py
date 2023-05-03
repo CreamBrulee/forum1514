@@ -1,5 +1,4 @@
 import datetime
-
 from flask import Flask, render_template, redirect, request, make_response, session, abort, url_for
 
 from data import db_session
@@ -86,7 +85,7 @@ def news_comment(id):
     comments_ben = []
     if tree:
         for i in tree:
-            #print(i.created_date)
+            # print(i.created_date)
             user = db_sess.query(User)
             for j in user:
                 if j.id == i.user_id:
@@ -95,7 +94,7 @@ def news_comment(id):
         return redirect(f'/news_comment/{id}')
     else:
         return render_template('comment.html',
-                                title='Комментирование новости', news=news,  form=form, comments=comments_ben)
+                               title='Комментирование новости', news=news, form=form, comments=comments_ben)
 
 
 def make_tree(items):
@@ -130,7 +129,6 @@ def news_comment_replay(id, com_id):
     db_sess = db_session.create_session()
     news = db_sess.query(News).filter(News.id == id).first()
     com = db_sess.query(Comments).filter(Comments.id == com_id).first()
-    print(form.title.data)
     if form.title.data is not None:
         text = form.title.data
         news_id = id
@@ -150,7 +148,7 @@ def news_comment_replay(id, com_id):
     comments_ben = []
     if tree:
         for i in tree:
-            #print(i.created_date)
+            # print(i.created_date)
             user = db_sess.query(User)
             for j in user:
                 if j.id == i.user_id:
@@ -159,7 +157,7 @@ def news_comment_replay(id, com_id):
         return redirect(f'/news_comment/{id}')
     else:
         return render_template('comment.html',
-                                title='Комментирование новости', news=news,  form=form, comments=comments_ben)
+                               title='Комментирование новости', news=news, form=form, comments=comments_ben)
 
 
 @app.route('/news/<int:id>', methods=['GET', 'POST'])
@@ -196,7 +194,6 @@ def edit_news(id):
                            )
 
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -212,7 +209,7 @@ def login():
     return render_template('login.html', title='Авторизация', form=form)
 
 
-@app.route('/news',  methods=['GET', 'POST'])
+@app.route('/news', methods=['GET', 'POST'])
 @login_required
 def add_news():
     form = NewsForm()
@@ -247,7 +244,7 @@ def reqister():
         user = User(
             name=form.name.data,
             email=form.email.data,
-            about=form.about.data
+            about=form.about.data,
         )
         user.set_password(form.password.data)
         db_sess.add(user)
@@ -265,15 +262,12 @@ def logout():
 
 @app.route('/<int:userid>')
 def profil(userid):
-    return render_template('user.html', title='1')
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == userid).first()
+    news = db_sess.query(News).filter(News.user == user)
+    return render_template('user.html', news=news, title=user.name)
 
 
 if __name__ == '__main__':
     db_session.global_init("db/blogs.db")
     main()
-
-
-
-
-
-
