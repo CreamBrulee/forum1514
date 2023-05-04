@@ -5,6 +5,16 @@
 <form action="" method="post">
     {{ form.hidden_tag() }}
 <div class="col-md6 border rounded p-1 mt-2">
+    <script>
+        function get_new_comments(){
+            $.get('http://127.0.0.1:7777/update').done(function(data) {
+            console.log(data);})
+            var ben = $('#' + 'block_comments')
+        }
+        var now_count_comments = {{comments|length}}
+        console.log(now_count_comments);
+    </script>
+    <button name="nubex" value="Nubex" onclick="get_new_comments()">
     <h2 class="rounded p-1" style="background-color: #d6e6fe">{{news.title}}</h2>
     <div>
         {{news.content}}
@@ -16,7 +26,7 @@
     </div>
     <div>
         <h5 class="mt-2">Комментарии</h5>
-        <div class="col-md6 border rounded p-1 mt-2">
+        <div class="col-md6 border rounded p-1 mt-2" id="block_comments">
         {% for all in comments %}
             <p style="padding-left:{{all[4]}}em" >
             {{all[0].strftime('%d.%m.%Y %H:%M')}}
@@ -28,7 +38,6 @@
         {% endfor %}
         </div>
     </div>
-
     <p>
         {{ form.title(class="form-control") }}
         {% for error in form.title.errors %}
@@ -39,7 +48,7 @@
     </p>
 
 
-    <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    <p>{{ form.submit(type="submit", class="btn btn-primary", onclick="window.location.reload()") }}</p>
     {{message}}
     </form>
 </div>
