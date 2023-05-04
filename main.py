@@ -1,8 +1,6 @@
 import datetime
-import asyncio
-import websockets
-from flask import Flask, render_template, redirect, request, make_response, session, abort, url_for, jsonify
-from flask_socketio import SocketIO, send
+
+from flask import Flask, render_template, redirect, request, make_response, session, abort, url_for
 
 from data import db_session
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -16,29 +14,11 @@ from forms.login import LoginForm
 dict_of_used_comms = {}
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
-
-socketio = SocketIO(app)
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(
+    days=365
+)
 login_manager = LoginManager()
 login_manager.init_app(app)
-
-all_clients = []
-
-
-@app.route("/update")
-def what_kol_comment():
-    db_sess = db_session.create_session()
-    comments = db_sess.query(Comments).order_by('id')
-    tree = make_tree(comments)
-
-    comments_ben = []
-    if tree:
-        for i in tree:
-            # print(i.created_date)
-            user = db_sess.query(User)
-            for j in user:
-                if j.id == i.user_id:
-                    comments_ben.append((i.created_date, j.name, i.text, i.id, i.vlog))
-    return comments_ben
 
 
 def main():
@@ -46,8 +26,7 @@ def main():
 
     # app.run()
 
-    socketio.run(app, port=7777, allow_unsafe_werkzeug=True)
-
+    app.run(port=7777)
 
 
 @login_manager.user_loader
@@ -82,18 +61,13 @@ def news_delete(id):
     return redirect('/')
 
 
-@socketio.on('message')
-def handleMessage(data):
-    print(f"Message:{data}")
-    send(data, broadcast=True)
-
-
 @app.route('/news_comment/<int:id>', methods=['GET', 'POST'])
 @login_required
 def news_comment(id):
     form = NewsForm()
     db_sess = db_session.create_session()
     news = db_sess.query(News).filter(News.id == id).first()
+    print(form.title.data)
     if form.title.data is not None:
         text = form.title.data
         news_id = id
@@ -112,7 +86,7 @@ def news_comment(id):
     comments_ben = []
     if tree:
         for i in tree:
-            # print(i.created_date)
+            #print(i.created_date)
             user = db_sess.query(User)
             for j in user:
                 if j.id == i.user_id:
@@ -121,7 +95,7 @@ def news_comment(id):
         return redirect(f'/news_comment/{id}')
     else:
         return render_template('comment.html',
-                               title='Комментирование новости', news=news, form=form, comments=comments_ben)
+                                title='Комментирование новости', news=news,  form=form, comments=comments_ben)
 
 
 def make_tree(items):
@@ -156,6 +130,7 @@ def news_comment_replay(id, com_id):
     db_sess = db_session.create_session()
     news = db_sess.query(News).filter(News.id == id).first()
     com = db_sess.query(Comments).filter(Comments.id == com_id).first()
+    print(form.title.data)
     if form.title.data is not None:
         text = form.title.data
         news_id = id
@@ -175,7 +150,7 @@ def news_comment_replay(id, com_id):
     comments_ben = []
     if tree:
         for i in tree:
-            # print(i.created_date)
+            #print(i.created_date)
             user = db_sess.query(User)
             for j in user:
                 if j.id == i.user_id:
@@ -184,7 +159,7 @@ def news_comment_replay(id, com_id):
         return redirect(f'/news_comment/{id}')
     else:
         return render_template('comment.html',
-                               title='Комментирование новости', news=news, form=form, comments=comments_ben)
+                                title='Комментирование новости', news=news,  form=form, comments=comments_ben)
 
 
 @app.route('/news/<int:id>', methods=['GET', 'POST'])
@@ -221,25 +196,23 @@ def edit_news(id):
                            )
 
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        print(1)
         db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(
-            (User.email == form.name_email.data) | (User.name == form.name_email.data)).first()
-        print(user.name)
+        user = db_sess.query(User).filter(User.email == form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             return redirect("/")
         return render_template('login.html',
-                               message="Неправильный логин/имя или пароль",
+                               message="Неправильный логин или пароль",
                                form=form)
     return render_template('login.html', title='Авторизация', form=form)
 
 
-@app.route('/news', methods=['GET', 'POST'])
+@app.route('/news',  methods=['GET', 'POST'])
 @login_required
 def add_news():
     form = NewsForm()
@@ -261,16 +234,13 @@ def add_news():
 def reqister():
     form = RegisterForm()
     if form.validate_on_submit():
+        print(form.email.data)
         if form.password.data != form.password_again.data:
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Пароли не совпадают")
         db_sess = db_session.create_session()
         if db_sess.query(User).filter(User.email == form.email.data).first():
-            return render_template('register.html', title='Регистрация',
-                                   form=form,
-                                   message="Такой пользователь уже есть")
-        if db_sess.query(User).filter(User.name == form.name.data).first():
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Такой пользователь уже есть")
@@ -300,8 +270,10 @@ def profil(userid):
 
 if __name__ == '__main__':
     db_session.global_init("db/blogs.db")
-    # event_loop = asyncio.get_event_loop()
-    # event_loop.run_until_complete(start_server())
-    # event_loop.run_forever()
     main()
+
+
+
+
+
 

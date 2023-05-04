@@ -5,7 +5,6 @@ from flask_wtf import FlaskForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import EmailField, PasswordField, BooleanField, SubmitField
 from wtforms.validators import DataRequired
-import sqlalchemy_file
 
 from .db_session import SqlAlchemyBase
 from sqlalchemy import orm
@@ -14,7 +13,7 @@ from sqlalchemy import orm
 class User(SqlAlchemyBase, UserMixin):
     __tablename__ = 'users'
     news = orm.relationship("News", back_populates='user')
-
+    # avatars = orm.relationship("avatars", back_populates='user')
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True,
@@ -24,8 +23,7 @@ class User(SqlAlchemyBase, UserMixin):
                               index=True, unique=True, nullable=True)
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.String,
-                                     default=datetime.datetime.now().strftime('%d.%m.%Y %H:%M'))
-    # cover = sqlalchemy.Column(sqlalchemy_file.ImageField(thumbnail_size=(500, 500)))
+                                     default=datetime.datetime.now().strftime('%d.%m.%Y'))
 
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)
