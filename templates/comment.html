@@ -7,7 +7,7 @@
 <div class="col-md6 border rounded p-1 mt-2">
 <script>
         function get_new_comments(){
-            $.get('http://127.0.0.1:7777/update/'+{{news.id}}).done(function(data) {
+            $.get('http://127.0.0.1:7777/update/' + {{news[0].id}}).done(function(data) {
             for (const i in data) {
                 var idForthese = data[i][3]
                 var ben = $('#' + idForthese)
@@ -65,9 +65,9 @@
                     <a href="/news_comment/{{ news[0].id }}/{{all[3]}}" class="btn btn-outline-secondary btn-sm" id="answer">
                     Ответить
                     </a>
-                    <a id="{{all[3]}}">
-                    </a>
                 </div>
+                <a id="{{all[3]}}">
+                    </a>
             </div>
         {% endfor %}
         </div>
