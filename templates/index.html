@@ -10,29 +10,31 @@
     {% for item in news%}
     <div class="col-md6 border rounded p-1 mt-2">
 
-        <h2 class="rounded p-1" style="background-color: #d6e6fe">{{item.title}}</h2>
+        <h2 class="rounded p-1" style="background-color: #d6e6fe">{{item[0].title}}</h2>
         <p >
-            {{item.content}}
+            {{item[0].content}}
         </p>
-        <p>
-            Автор - {{item.user.name}}, Дата написания - {{item.created_date}}
-        </p>
-        {% if current_user.is_authenticated and current_user == item.user %}
+        <div class="d-flex flex-row">
+            <img src="data:{{ item[2].mimetype }};base64,{{ item[2].img }}" class="rounded-circle z-depth-0" style="width:40px; height:40px; margin-right:10px;"/>
+            <b style="margin-right:15px; margin-top:8px;"><a href="/{{item[1].id}}">{{item[1].name}}</a></b>
+            <div class=" text-secondary" style="margin-top:8px;">{{item[0].created_date}}</div>
+        </div>
+        {% if current_user.is_authenticated and current_user.id == item[1].id %}
         <div class="m-1 bg-light p-1">
-            <a href="/news/{{ item.id }}" class="btn btn-warning btn-sm">
+            <a href="/news/{{ item[0].id }}" class="btn btn-warning btn-sm">
                 Изменить
             </a>
-            <a href="/news_delete/{{ item.id }}" class="btn btn-danger btn-sm">
+            <a href="/news_delete/{{ item[0].id }}" class="btn btn-danger btn-sm">
                 Удалить
             </a>
         </div>
         {% endif %}
         {% if current_user.is_authenticated%}
-            <a href="/news_comment/{{ item.id }}" class="btn btn-outline-secondary">
+            <a href="/news_comment/{{ item[0].id }}" class="btn btn-outline-secondary mt-1">
                 Комментировать
             </a>
         {% else %}
-            <a href="/login" class="btn btn-outline-secondary">
+            <a href="/login" class="btn btn-outline-secondary mt-1">
                 Комментировать
             </a>
         {% endif %}

@@ -14,7 +14,7 @@ from sqlalchemy import orm
 class Images(SqlAlchemyBase):
     __tablename__ = 'images'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    img = sqlalchemy.Column(sqlalchemy.Text, unique=True, nullable=False)
+    img = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
     name = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
     mimetype = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
     user_id = sqlalchemy.Column(sqlalchemy.Integer,

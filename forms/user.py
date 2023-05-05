@@ -12,4 +12,3 @@ class RegisterForm(FlaskForm):
     name_email = StringField('Имя пользователя или почта')
     about = TextAreaField("Немного о себе")
     submit = SubmitField('Войти')
-

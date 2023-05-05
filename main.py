@@ -1,11 +1,8 @@
 import base64
 import datetime
-
-import flask
 from flask import Flask, render_template, redirect, request, make_response, session, abort, url_for
 from sqlalchemy import desc
 from werkzeug.utils import secure_filename
-
 from data import db_session
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from data.users import User
@@ -28,11 +25,36 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 
+@app.route("/update/<idn>")
+def what_kol_comment(idn):
+    db_sess = db_session.create_session()
+    comments = db_sess.query(Comments).filter(Comments.news_id == idn).order_by('id')
+    tree = make_tree(comments)
+    comments_ben = []
+    if tree:
+        for i in tree:
+            user = db_sess.query(User)
+            for j in user:
+                if j.id == i.user_id:
+                    img = db_sess.query(Images).filter(Images.user_id == j.id).first()
+                    if not img:
+                        with open("static/img/1.gif", "rb") as image:
+                            f = image.read()
+                            b = base64.b64encode(bytearray(f)).decode('ascii')
+                            m = 'image/jpg'
+                            comments_ben.append(
+                                (i.created_date, j.name, i.text, i.id, i.vlog, j.id, b, m))
+                    comments_ben.append((i.created_date, j.name, i.text, i.id, i.vlog, id, img.img, img.mimetype))
+    db_sess.close()
+    return comments_ben
+
+
+@app.route("/to_our_time/<data>")
+def to_strf(data):
+    return datetime.datetime.strptime(data, '%a, %d %b %Y %X %Z').strftime('%d.%m.%Y %H:%M')
+
+
 def main():
-    # db_session.global_init("db/news.db")
-
-    # app.run()
-
     app.run(port=7777)
 
 
@@ -46,10 +68,13 @@ def load_user(user_id):
 def index():
     db_sess = db_session.create_session()
     if current_user.is_authenticated:
-        news = db_sess.query(News).filter(
-            (News.user == current_user) | (News.is_private != True)).order_by(desc(News.created_date))
+        news = db_sess.query(News, User, Images).filter(News.user_id == User.id).filter(
+            User.id == Images.user_id).filter(
+           (News.user == current_user) | (News.is_private != True)).order_by(desc(News.created_date)).all()
     else:
-        news = db_sess.query(News).filter(News.is_private != True).order_by(desc(News.created_date))
+        news = db_sess.query(News, User, Images).filter(News.user_id == User.id).filter(
+            User.id == Images.user_id).filter(News.is_private != True).join(
+            Images, Images.user_id == News.user_id).order_by(desc(News.created_date)).all()
     return render_template("index.html", news=news, title='FORUM1514')
 
 
@@ -73,9 +98,9 @@ def search():
 
 @app.route('/news_delete/<int:id>', methods=['GET', 'POST'])
 @login_required
-def news_delete(id):
+def news_delete(idn):
     db_sess = db_session.create_session()
-    news = db_sess.query(News).filter(News.id == id,
+    news = db_sess.query(News).filter(News.id == idn,
                                       News.user == current_user
                                       ).first()
     if news:
@@ -86,16 +111,16 @@ def news_delete(id):
     return redirect('/')
 
 
-@app.route('/news_comment/<int:id>', methods=['GET', 'POST'])
+@app.route('/news_comment/<int:idn>', methods=['GET', 'POST'])
 @login_required
-def news_comment(id):
+def news_comment(idn):
     form = NewsForm()
     db_sess = db_session.create_session()
-    news = db_sess.query(News).filter(News.id == id).first()
-    print(form.title.data)
+    news = db_sess.query(News, User, Images).filter(News.user_id == User.id).filter(User.id == Images.user_id).filter(
+        News.id == idn).order_by(desc(News.created_date)).first()
     if form.title.data is not None:
         text = form.title.data
-        news_id = id
+        news_id = idn
         user_id = current_user.id
         comment = Comments()
         comment.text = text
@@ -104,19 +129,24 @@ def news_comment(id):
         comment.created_date = datetime.datetime.now()
         db_sess.add(comment)
         db_sess.commit()
-    comments = db_sess.query(Comments).order_by('id')
+    comments = db_sess.query(Comments).filter(Comments.news_id == idn).order_by('id')
     tree = make_tree(comments)
-    # for i in make_tree(comments):
-    #    print(i.text)
     comments_ben = []
     if tree:
         for i in tree:
-            # print(i.created_date)
             user = db_sess.query(User).all()
             for j in user:
                 if j.id == i.user_id:
-                    comments_ben.append((i.created_date, j.name, i.text, i.id, i.vlog, j.id))
-                print(j.id)
+                    img = db_sess.query(Images).filter(Images.user_id == j.id).first()
+                    if not img:
+                        with open("static/img/1.gif", "rb") as image:
+                            f = image.read()
+                            b = base64.b64encode(bytearray(f)).decode('ascii')
+                            m = 'image/jpg'
+                            comments_ben.append(
+                                (i.created_date, j.name, i.text, i.id, i.vlog, j.id, b, m))
+
+                    comments_ben.append((i.created_date, j.name, i.text, i.id, i.vlog, j.id, img.img, img.mimetype))
     if form.validate_on_submit():
         return redirect(f'/news_comment/{id}')
     else:
@@ -149,16 +179,17 @@ def make_all_tree(list, ben):
     return ben
 
 
-@app.route('/news_comment/<int:id>/<int:com_id>', methods=['GET', 'POST'])
+@app.route('/news_comment/<int:idn>/<int:com_id>', methods=['GET', 'POST'])
 @login_required
-def news_comment_replay(id, com_id):
+def news_comment_replay(idn, com_id):
     form = NewsForm()
     db_sess = db_session.create_session()
-    news = db_sess.query(News).filter(News.id == id).first()
+    news = db_sess.query(News, User, Images).filter(News.user_id == User.id).filter(User.id == Images.user_id).filter(
+        News.id == idn).order_by(desc(News.created_date)).first()
     com = db_sess.query(Comments).filter(Comments.id == com_id).first()
     if form.title.data is not None:
         text = form.title.data
-        news_id = id
+        news_id = idn
         user_id = current_user.id
         comment = Comments()
         comment.text = text
@@ -169,18 +200,24 @@ def news_comment_replay(id, com_id):
         comment.created_date = datetime.datetime.now()
         db_sess.add(comment)
         db_sess.commit()
-    comments = db_sess.query(Comments).order_by('id')
+    comments = db_sess.query(Comments).filter(Comments.news_id == idn).order_by('id')
     tree = make_tree(comments)
 
     comments_ben = []
     if tree:
         for i in tree:
-            # print(i.created_date)
             user = db_sess.query(User).all()
             for j in user:
-                print(j.id)
                 if j.id == i.user_id:
-                    comments_ben.append((i.created_date, j.name, i.text, i.id, i.vlog, i.user_id))
+                    img = db_sess.query(Images).filter(Images.user_id == j.id).first()
+                    if not img:
+                        with open("static/img/1.gif", "rb") as image:
+                            f = image.read()
+                            b = base64.b64encode(bytearray(f)).decode('ascii')
+                            m = 'image/jpg'
+                            comments_ben.append(
+                                (i.created_date, j.name, i.text, i.id, i.vlog, j.id, b, m))
+                    comments_ben.append((i.created_date, j.name, i.text, i.id, i.vlog, j.id, img.img, img.mimetype))
 
     if form.validate_on_submit():
         return redirect(f'/news_comment/{id}')
@@ -189,13 +226,13 @@ def news_comment_replay(id, com_id):
                                title='Комментирование новости', news=news, form=form, comments=comments_ben)
 
 
-@app.route('/news/<int:id>', methods=['GET', 'POST'])
+@app.route('/news/<int:idn>', methods=['GET', 'POST'])
 @login_required
-def edit_news(id):
+def edit_news(idn):
     form = NewsForm()
     if request.method == "GET":
         db_sess = db_session.create_session()
-        news = db_sess.query(News).filter(News.id == id,
+        news = db_sess.query(News).filter(News.id == idn,
                                           News.user == current_user
                                           ).first()
         if news:
@@ -207,7 +244,7 @@ def edit_news(id):
 
     if form.validate_on_submit():
         db_sess = db_session.create_session()
-        news = db_sess.query(News).filter(News.id == id,
+        news = db_sess.query(News).filter(News.id == idn,
                                           News.user == current_user
                                           ).first()
         if news:
@@ -228,7 +265,6 @@ def edit_news(id):
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        print(1)
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(
             (User.email == form.name_email.data) | (User.name == form.name_email.data)).first()
@@ -251,6 +287,7 @@ def add_news():
         news.title = form.title.data
         news.content = form.content.data
         news.is_private = form.is_private.data
+        news.created_date = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
         current_user.news.append(news)
         db_sess.merge(current_user)
         db_sess.commit()
@@ -263,7 +300,6 @@ def add_news():
 def reqister():
     form = RegisterForm()
     if form.validate_on_submit():
-        print(form.email.data)
         if form.password.data != form.password_again.data:
             return render_template('register.html', title='Регистрация',
                                    form=form,
@@ -278,9 +314,18 @@ def reqister():
             email=form.email.data,
             about=form.about.data,
         )
+
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
+        with open("static/img/1.gif", "rb") as image:
+            f = image.read()
+            b = base64.b64encode(bytearray(f)).decode('ascii')
+            m = 'image/jpg'
+            u = db_sess.query(User).filter(User.email == form.email.data).first().id
+            img = Images(img=b, name="1.gif", mimetype=m, user_id=u)
+            db_sess.add(img)
+            db_sess.commit()
         return redirect('/login')
     return render_template('register.html', title='Регистрация', form=form)
 
@@ -296,7 +341,8 @@ def logout():
 def account(userid):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id == userid).first()
-    news = db_sess.query(News).filter(News.user == user)
+    news = db_sess.query(News, User, Images).filter(News.user_id == User.id).filter(User.id == Images.user_id).filter(
+        User.id == userid).order_by(desc(News.created_date)).all()
     img = db_sess.query(Images).filter(Images.user_id == userid).first()
     if not img:
         with open("static/img/1.gif", "rb") as image:
@@ -328,9 +374,7 @@ def edit_account(userid):
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         pic = form.avatar.data
-        print(pic, )
         if pic:
-            print(222)
             filename = secure_filename(pic.filename)
             mimetype = pic.mimetype
             if not filename or not mimetype:
