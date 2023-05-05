@@ -1,5 +1,6 @@
 import base64
 import datetime
+import flask
 from flask import Flask, render_template, redirect, request, make_response, session, abort, url_for
 from sqlalchemy import desc
 from werkzeug.utils import secure_filename
@@ -55,7 +56,7 @@ def to_strf(data):
 
 
 def main():
-    app.run(port=7777)
+    app.run()
 
 
 @login_manager.user_loader
@@ -68,13 +69,10 @@ def load_user(user_id):
 def index():
     db_sess = db_session.create_session()
     if current_user.is_authenticated:
-        news = db_sess.query(News, User, Images).filter(News.user_id == User.id).filter(
-            User.id == Images.user_id).filter(
+        news = db_sess.query(News, User, Images).filter(News.user_id == User.id).filter(User.id == Images.user_id).filter(
            (News.user == current_user) | (News.is_private != True)).order_by(desc(News.created_date)).all()
     else:
-        news = db_sess.query(News, User, Images).filter(News.user_id == User.id).filter(
-            User.id == Images.user_id).filter(News.is_private != True).join(
-            Images, Images.user_id == News.user_id).order_by(desc(News.created_date)).all()
+        news = db_sess.query(News, User, Images).filter(News.user_id == User.id).filter(User.id == Images.user_id).filter(News.is_private != True).join(Images, Images.user_id == News.user_id).order_by(desc(News.created_date)).all()
     return render_template("index.html", news=news, title='FORUM1514')
 
 
@@ -84,13 +82,14 @@ def search():
     message = ''
     db_sess = db_session.create_session()
     if current_user.is_authenticated:
-        news = db_sess.query(News).filter(
-            ((News.user == current_user) | (News.is_private != True)),
+        news = db_sess.query(News, User, Images).filter(News.user_id == User.id).filter(User.id == Images.user_id).filter(
+           ((News.user == current_user) | (News.is_private != True)),
             ((News.title.like(f"%{rec}%")) | (News.content.like(f"%{rec}%")))).order_by(desc(News.created_date)).all()
     else:
-        news = db_sess.query(News).filter(News.is_private != True,
-                                          ((News.title.like(f"%{rec}%")) | (News.content.like(f"%{rec}%")))
-                                          ).order_by(desc(News.created_date)).all()
+        news = db_sess.query(News, User, Images).filter(News.user_id == User.id).filter(User.id == Images.user_id).filter(
+          News.is_private != True, ((
+            News.title.like(f"%{rec}%")) | (News.content.like(f"%{rec}%")))).join(
+          Images, Images.user_id == News.user_id).order_by(desc(News.created_date)).all()
     if not news:
         message = "Таких постов не нашлось("
     return render_template("index.html", news=news, title='FORUM1514', message=message)
