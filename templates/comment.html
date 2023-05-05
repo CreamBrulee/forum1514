@@ -5,30 +5,62 @@
 <form action="" method="post">
     {{ form.hidden_tag() }}
 <div class="col-md6 border rounded p-1 mt-2">
+    <script>
+        function get_new_comments(){
+            $.get('https://glamorous-crocus-scribe.glitch.me/update').done(function(data) {
+            for (const i in data) {
+                var idForthese = data[i][3]
+                var ben = $('#' + idForthese)
+                if (ben.length){
+                    console.log('yes')
+                }
+                else{
+                    var ben = $('#' + data[i-1][3])
+                    ben.append("<p></p>")
+                    ben.append("<p style=padding-left:" + data[i][4] + "em >")
+                    $.get('https://glamorous-crocus-scribe.glitch.me/to_our_time/' + data[i][0]).done(function(time) {
+                        ben.append(time + ' ', data[i][1] + ' ')
+                        ben.append("<a href=/news_comment/" + {{news.id}} + "/" + data[i][3] + " className=btnbtn-secondarybtn-sm  id=answer> Ответить </a>")
+                        ben.append("<a id=" + idForthese + "> " + data[i][2] + " </a>")
+                    })
+                    }
+                }
+            var now_count_comments = {{comments|length}}
+            console.log(now_count_comments)
+            })
+        }
+        setInterval(get_new_comments, 5000)
+    </script>
     <h2 class="rounded p-1" style="background-color: #d6e6fe">{{news.title}}</h2>
     <div>
         {{news.content}}
     </div>
 
     <div>
-        Автор - {{news.user.name}}, Дата написания - {{news.created_date}}
+        Автор - <a href="/{{news.user.id}}">{{news.user.name}}</a>, Дата написания - {{news.created_date}}
     </div>
-    </div>
+</div>
     <div>
         <h5 class="mt-2">Комментарии</h5>
-        <div class="col-md6 border rounded p-1 mt-2">
+        <div class="d-flex flex-column col-md6 border rounded p-1 mt-2" id="block_comments">
         {% for all in comments %}
-            <p style="padding-left:{{all[4]}}em" >
-            {{all[0].strftime('%d.%m.%Y %H:%M')}}
-            {{all[1]}}
-            <a href="/news_comment/{{ news.id }}/{{all[3]}}" class="btn btn-secondary btn-sm">
-            Ответить
-            </a>
-            {{all[2]}}
+            <div class="d-sm-flex flex-column" style="margin-left:{{all[4]}}em; margin-bottom: 10px;" >
+                <div class="d-flex flex-row">
+                    <b style="margin-right:15px"><a href="/{{all[5]}}">{{all[1]}}</a></b>
+                    <div class=" text-secondary">{{all[0].strftime('%d.%m.%Y %H:%M')}}</div>
+                </div>
+                {{all[2]}}
+                <div class="d-flex justify-content-start">
+                    <a href="/news_comment/{{ news.id }}/{{all[3]}}" class="btn btn-outline-secondary btn-sm" id="answer">
+                    Ответить
+                    </a>
+                    <a id="{{all[3]}}">
+                    </a>
+                </div>
+            </div>
         {% endfor %}
         </div>
     </div>
-
     <p>
         {{ form.title(class="form-control") }}
         {% for error in form.title.errors %}
@@ -39,7 +71,7 @@
     </p>
 
 
-    <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    <p>{{ form.submit(type="submit", class="btn btn-primary", onclick="window.location.reload()") }}</p>
     {{message}}
     </form>
 </div>

@@ -1,8 +1,10 @@
+import base64
 import datetime
 
 import flask
 from flask import Flask, render_template, redirect, request, make_response, session, abort, url_for
 from sqlalchemy import desc
+from werkzeug.utils import secure_filename
 
 from data import db_session
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -21,6 +23,7 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(
     days=365
 )
+app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif']
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -109,10 +112,11 @@ def news_comment(id):
     if tree:
         for i in tree:
             # print(i.created_date)
-            user = db_sess.query(User)
+            user = db_sess.query(User).all()
             for j in user:
                 if j.id == i.user_id:
-                    comments_ben.append((i.created_date, j.name, i.text, i.id, i.vlog))
+                    comments_ben.append((i.created_date, j.name, i.text, i.id, i.vlog, j.id))
+                print(j.id)
     if form.validate_on_submit():
         return redirect(f'/news_comment/{id}')
     else:
@@ -172,10 +176,12 @@ def news_comment_replay(id, com_id):
     if tree:
         for i in tree:
             # print(i.created_date)
-            user = db_sess.query(User)
+            user = db_sess.query(User).all()
             for j in user:
+                print(j.id)
                 if j.id == i.user_id:
-                    comments_ben.append((i.created_date, j.name, i.text, i.id, i.vlog))
+                    comments_ben.append((i.created_date, j.name, i.text, i.id, i.vlog, i.user_id))
+
     if form.validate_on_submit():
         return redirect(f'/news_comment/{id}')
     else:
@@ -222,13 +228,15 @@ def edit_news(id):
 def login():
     form = LoginForm()
     if form.validate_on_submit():
+        print(1)
         db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.email == form.email.data).first()
+        user = db_sess.query(User).filter(
+            (User.email == form.name_email.data) | (User.name == form.name_email.data)).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             return redirect("/")
         return render_template('login.html',
-                               message="Неправильный логин или пароль",
+                               message="Неправильный логин/имя или пароль",
                                form=form)
     return render_template('login.html', title='Авторизация', form=form)
 
@@ -289,7 +297,19 @@ def account(userid):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id == userid).first()
     news = db_sess.query(News).filter(News.user == user)
-    return render_template('user.html', news=news, title=user.name)
+    img = db_sess.query(Images).filter(Images.user_id == userid).first()
+    if not img:
+        with open("static/img/1.png", "rb") as image:
+            f = image.read()
+            b = base64.b64encode(bytearray(f)).decode('ascii')
+            m = 'image/jpg'
+        return render_template('user.html', news=news, title=user.name, img=b, mim=m, user=user)
+    return render_template('user.html', news=news, title=user.name, img=img.img, mim=img.mimetype, user=user)
+
+
+def render_picture(data):
+    render_pic = base64.b64encode(data).decode('ascii')
+    return render_pic
 
 
 @app.route('/editacc/<int:userid>', methods=['GET', 'POST'])
@@ -307,6 +327,24 @@ def edit_account(userid):
             abort(404)
     if form.validate_on_submit():
         db_sess = db_session.create_session()
+        pic = form.avatar.data
+        print(pic, )
+        if pic:
+            print(222)
+            filename = secure_filename(pic.filename)
+            mimetype = pic.mimetype
+            if not filename or not mimetype:
+                return 'Bad upload!', 400
+            image = db_sess.query(Images).filter(Images.user_id == userid).first()
+            if image:
+                image.img = render_picture(pic.read())
+                image.name = filename
+                image.mimetype = mimetype
+            else:
+                img = Images(img=pic.read(), name=filename, mimetype=mimetype, user_id=userid)
+                db_sess.add(img)
+            db_sess.commit()
+
         if db_sess.query(User).filter(((User.email == form.email.data) | (
                 User.name == form.name.data)), (User.id != userid)).first():
             return render_template("editacc.html", title='edit',
@@ -321,7 +359,7 @@ def edit_account(userid):
             return redirect(f'/{userid}')
         else:
             abort(404)
-    return render_template("editacc.html", title='edit', form=form)
+    return render_template("editacc.html", title='edit', form=form, userid=userid)
 
 
 if __name__ == '__main__':
