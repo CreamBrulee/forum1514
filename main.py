@@ -25,10 +25,10 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 
-@app.route("/update/<idn>")
-def what_kol_comment(idn):
+@app.route("/update/<id>")
+def what_kol_comment(id):
     db_sess = db_session.create_session()
-    comments = db_sess.query(Comments).filter(Comments.news_id == idn).order_by('id')
+    comments = db_sess.query(Comments).filter(Comments.news_id == id).order_by('id')
     tree = make_tree(comments)
     comments_ben = []
     if tree:
@@ -98,9 +98,9 @@ def search():
 
 @app.route('/news_delete/<int:id>', methods=['GET', 'POST'])
 @login_required
-def news_delete(idn):
+def news_delete(id):
     db_sess = db_session.create_session()
-    news = db_sess.query(News).filter(News.id == idn,
+    news = db_sess.query(News).filter(News.id == id,
                                       News.user == current_user
                                       ).first()
     if news:
@@ -111,16 +111,16 @@ def news_delete(idn):
     return redirect('/')
 
 
-@app.route('/news_comment/<int:idn>', methods=['GET', 'POST'])
+@app.route('/news_comment/<int:id>', methods=['GET', 'POST'])
 @login_required
-def news_comment(idn):
+def news_comment(id):
     form = NewsForm()
     db_sess = db_session.create_session()
     news = db_sess.query(News, User, Images).filter(News.user_id == User.id).filter(User.id == Images.user_id).filter(
-        News.id == idn).order_by(desc(News.created_date)).first()
+        News.id == id).order_by(desc(News.created_date)).first()
     if form.title.data is not None:
         text = form.title.data
-        news_id = idn
+        news_id = id
         user_id = current_user.id
         comment = Comments()
         comment.text = text
@@ -129,7 +129,7 @@ def news_comment(idn):
         comment.created_date = datetime.datetime.now()
         db_sess.add(comment)
         db_sess.commit()
-    comments = db_sess.query(Comments).filter(Comments.news_id == idn).order_by('id')
+    comments = db_sess.query(Comments).filter(Comments.news_id == id).order_by('id')
     tree = make_tree(comments)
     comments_ben = []
     if tree:
@@ -179,17 +179,17 @@ def make_all_tree(list, ben):
     return ben
 
 
-@app.route('/news_comment/<int:idn>/<int:com_id>', methods=['GET', 'POST'])
+@app.route('/news_comment/<int:id>/<int:com_id>', methods=['GET', 'POST'])
 @login_required
-def news_comment_replay(idn, com_id):
+def news_comment_replay(id, com_id):
     form = NewsForm()
     db_sess = db_session.create_session()
     news = db_sess.query(News, User, Images).filter(News.user_id == User.id).filter(User.id == Images.user_id).filter(
-        News.id == idn).order_by(desc(News.created_date)).first()
+        News.id == id).order_by(desc(News.created_date)).first()
     com = db_sess.query(Comments).filter(Comments.id == com_id).first()
     if form.title.data is not None:
         text = form.title.data
-        news_id = idn
+        news_id = id
         user_id = current_user.id
         comment = Comments()
         comment.text = text
@@ -200,7 +200,7 @@ def news_comment_replay(idn, com_id):
         comment.created_date = datetime.datetime.now()
         db_sess.add(comment)
         db_sess.commit()
-    comments = db_sess.query(Comments).filter(Comments.news_id == idn).order_by('id')
+    comments = db_sess.query(Comments).filter(Comments.news_id == id).order_by('id')
     tree = make_tree(comments)
 
     comments_ben = []
@@ -226,13 +226,13 @@ def news_comment_replay(idn, com_id):
                                title='Комментирование новости', news=news, form=form, comments=comments_ben)
 
 
-@app.route('/news/<int:idn>', methods=['GET', 'POST'])
+@app.route('/news/<int:id>', methods=['GET', 'POST'])
 @login_required
-def edit_news(idn):
+def edit_news(id):
     form = NewsForm()
     if request.method == "GET":
         db_sess = db_session.create_session()
-        news = db_sess.query(News).filter(News.id == idn,
+        news = db_sess.query(News).filter(News.id == id,
                                           News.user == current_user
                                           ).first()
         if news:
@@ -244,7 +244,7 @@ def edit_news(idn):
 
     if form.validate_on_submit():
         db_sess = db_session.create_session()
-        news = db_sess.query(News).filter(News.id == idn,
+        news = db_sess.query(News).filter(News.id == id,
                                           News.user == current_user
                                           ).first()
         if news:
