@@ -3,6 +3,7 @@
 {% block content %}
 <div class="d-flex flex-row justify-content-md-center">
     <div class="container bg-white rounded shadow-sm m-3 py-2 h-100">
+        <img src="..." class="rounded mx-auto d-block" alt="...">
         <h3>{{ current_user.name }}</h3>
         <!-- foto-->
         <image>{{current_user.avatar}}</image>
@@ -12,7 +13,7 @@
         <p class="rounded border p-1">{{current_user.email}}</p>
         Дата регистрации
         <p class="rounded border p-1">{{current_user.created_date}}</p>
-        <a class="btn btn-primary me-2 mt-auto" href="/login">Редактировать профиль </a>
+        <a class="btn btn-primary me-2 mt-auto" href="/editacc/{{current_user.id}}">Редактировать профиль </a>
     </div>
     <div class="container bg-white rounded shadow-sm m-3 py-2 col-9">
         {% for item in news%}

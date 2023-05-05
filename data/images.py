@@ -1,4 +1,4 @@
-"""import datetime
+import datetime
 import sqlalchemy
 from flask_login import UserMixin
 from flask_wtf import FlaskForm
@@ -11,12 +11,15 @@ from .db_session import SqlAlchemyBase
 from sqlalchemy import orm
 
 
-class Avatar(SqlAlchemyBase):
-    __tablename__ = 'avatars'
+class Images(SqlAlchemyBase):
+    __tablename__ = 'images'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     img = sqlalchemy.Column(sqlalchemy.Text, unique=True, nullable=False)
     name = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
     mimetype = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
     user_id = sqlalchemy.Column(sqlalchemy.Integer,
-                                sqlalchemy.ForeignKey("users.id"))
-    user = orm.relationship('User') """
+                                sqlalchemy.ForeignKey("users.id"), nullable=True)
+    news_id = sqlalchemy.Column(sqlalchemy.Integer,
+                                sqlalchemy.ForeignKey("news.id"), nullable=True)
+    user = orm.relationship('User')
+    news = orm.relationship('News')

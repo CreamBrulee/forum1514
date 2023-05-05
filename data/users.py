@@ -13,7 +13,7 @@ from sqlalchemy import orm
 class User(SqlAlchemyBase, UserMixin):
     __tablename__ = 'users'
     news = orm.relationship("News", back_populates='user')
-    # avatars = orm.relationship("avatars", back_populates='user')
+    images = orm.relationship("Images", back_populates='user')
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)

@@ -1,11 +1,16 @@
 import datetime
+
+import flask
 from flask import Flask, render_template, redirect, request, make_response, session, abort, url_for
+from sqlalchemy import desc
 
 from data import db_session
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from data.users import User
 from data.news import News
+from data.images import Images
 from data.comments import Comments
+from forms.editacc import EditForm
 from forms.newsform import NewsForm
 from forms.user import RegisterForm
 from forms.login import LoginForm
@@ -34,15 +39,33 @@ def load_user(user_id):
     return db_sess.get(User, user_id)
 
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
 def index():
     db_sess = db_session.create_session()
     if current_user.is_authenticated:
         news = db_sess.query(News).filter(
-            (News.user == current_user) | (News.is_private != True))
+            (News.user == current_user) | (News.is_private != True)).order_by(desc(News.created_date))
     else:
-        news = db_sess.query(News).filter(News.is_private != True)
+        news = db_sess.query(News).filter(News.is_private != True).order_by(desc(News.created_date))
     return render_template("index.html", news=news, title='FORUM1514')
+
+
+@app.route('/search')
+def search():
+    rec = request.args.get('Search')
+    message = ''
+    db_sess = db_session.create_session()
+    if current_user.is_authenticated:
+        news = db_sess.query(News).filter(
+            ((News.user == current_user) | (News.is_private != True)),
+            ((News.title.like(f"%{rec}%")) | (News.content.like(f"%{rec}%")))).order_by(desc(News.created_date)).all()
+    else:
+        news = db_sess.query(News).filter(News.is_private != True,
+                                          ((News.title.like(f"%{rec}%")) | (News.content.like(f"%{rec}%")))
+                                          ).order_by(desc(News.created_date)).all()
+    if not news:
+        message = "Таких постов не нашлось("
+    return render_template("index.html", news=news, title='FORUM1514', message=message)
 
 
 @app.route('/news_delete/<int:id>', methods=['GET', 'POST'])
@@ -175,6 +198,7 @@ def edit_news(id):
             form.is_private.data = news.is_private
         else:
             abort(404)
+
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         news = db_sess.query(News).filter(News.id == id,
@@ -261,11 +285,43 @@ def logout():
 
 
 @app.route('/<int:userid>')
-def profil(userid):
+def account(userid):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id == userid).first()
     news = db_sess.query(News).filter(News.user == user)
     return render_template('user.html', news=news, title=user.name)
+
+
+@app.route('/editacc/<int:userid>', methods=['GET', 'POST'])
+@login_required
+def edit_account(userid):
+    form = EditForm()
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == userid).first()
+        if user:
+            form.name.data = user.name
+            form.email.data = user.email
+            form.about.data = user.about
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        if db_sess.query(User).filter(((User.email == form.email.data) | (
+                User.name == form.name.data)), (User.id != userid)).first():
+            return render_template("editacc.html", title='edit',
+                                   form=form,
+                                   message="Такой пользователь уже есть")
+        user = db_sess.query(User).filter(User.id == userid).first()
+        if user:
+            user.name = form.name.data
+            user.email = form.email.data
+            user.about = form.about.data
+            db_sess.commit()
+            return redirect(f'/{userid}')
+        else:
+            abort(404)
+    return render_template("editacc.html", title='edit', form=form)
 
 
 if __name__ == '__main__':

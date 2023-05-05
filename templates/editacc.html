@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container bg-white rounded shadow-sm mt-3 py-2">
+        <h3>Настройки профиля</h3>
+        <form action="" method="post">
+            {{ form.hidden_tag() }}
+            <p>
+                {{ form.avatar.label }}
+                {{ form.avatar(class="form-control", type="avatar") }}
+                <div class="fileinput fileinput-new" data-provides="fileinput">
+              <div class="fileinput-preview thumbnail" data-trigger="fileinput" style="width: 200px; height: 150px;"></div>
+              <div>
+                <span class="btn btn-default btn-file"><span class="fileinput-new">Select image</span><span class="fileinput-exists">Change</span><input type="file" name="..."></span>
+                <a href="#" class="btn btn-default fileinput-exists" data-dismiss="fileinput">Remove</a>
+              </div>
+            </div>
+            </p>
+            <p>
+                {{ form.name.label }}
+                {{ form.name(class="form-control", type="name") }}
+            </p>
+            <p>
+                {{ form.about.label }}
+                {{ form.about(class="form-control", type="about") }}
+            </p>
+            <p>
+                {{ form.email.label }}
+                {{ form.email(class="form-control", type="email") }}
+                {% for error in form.email.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </p>
+            <p>{{ form.submit(type="submit", class="btn btn-primary btn-lg") }}</p>
+        </form>
+        {{ message }}
+    </div>
+{% endblock %}
