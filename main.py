@@ -299,7 +299,7 @@ def account(userid):
     news = db_sess.query(News).filter(News.user == user)
     img = db_sess.query(Images).filter(Images.user_id == userid).first()
     if not img:
-        with open("static/img/1.png", "rb") as image:
+        with open("static/img/1.gif", "rb") as image:
             f = image.read()
             b = base64.b64encode(bytearray(f)).decode('ascii')
             m = 'image/jpg'
